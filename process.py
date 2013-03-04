@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
+import scipy
+
 from skimage import data, io, filter
 from skimage import data
 from skimage.filter import threshold_otsu
@@ -14,32 +16,29 @@ from skimage.measure import regionprops
 import utils
 import IPython
 
-utils.ipython_on_error()
+#utils.ipython_on_error()
 
-pic = Image.open("test.jpg")
+def reject_outliers(data, m=2):
+    return data[abs(data - np.mean(data)) < m * np.std(data)]
+def movingaverage(interval, window_size):
+    window = np.ones(window_size)
+    window /= np.linalg.norm(window)
+    return scipy.signal.convolve2d(interval, window)
+
+pic = Image.open("data/test2.jpg")
 image = np.asarray(pic)[:,:,0]
+image = movingaverage(image,(10,10))
+image = movingaverage(image,(10,10))
+image = movingaverage(image,(10,10))
+image = movingaverage(image,(10,10))
+io.imshow(image)
+io.show()
+image = filter.threshold_adaptive(image,200)
+#image = movingaverage(image,(10,10))
+#image = filter.canny(image,10)
+#image = filter.tv_denoise(image)
 
-thresh = threshold_otsu(image)
-bw = closing(image > thresh, square(3))
+io.imshow(image)
+io.show()
 
-label_image = label(bw)
-
-fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(6, 6))
-ax.imshow(label_image, cmap='jet')
-
-for region in regionprops(label_image, ['Area', 'BoundingBox']):
-
-    # skip small images
-    if region['Area'] < 100:
-        continue
-
-    # draw rectangle around segmented coins
-    minr, minc, maxr, maxc = region['BoundingBox']
-    rect = mpatches.Rectangle((minc, minr), maxc - minc, maxr - minr,
-                              fill=False, edgecolor='red', linewidth=2)
-    ax.add_patch(rect)
-
-plt.show()
-
-IPython.embed()
-
+#IPython.embed()
