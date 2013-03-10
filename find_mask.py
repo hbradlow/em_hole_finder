@@ -235,21 +235,19 @@ if __name__=="__main__":
         filename = "data/test2.jpg"
     p = Pipeline(downsample=20,filename=filename)
 
-    p.open()
-    p.blur()
+    p.open() #perform background subtraction
+    p.blur() #blur the image
+    p.crop(factor=15) #crop out the black borders that are produced by the blur
+    p.threshold() #do adaptive thresholding
+    p.erode() #erode the thresholded image
 
-    p.crop(factor=15)
-    p.threshold()
+    p.connected_components_iterative() #calculate the connected components
+    p.select_largest_component() #select the largest connected component
 
-    p.erode()
+    p.connected_components_iterative() #calculate the connected components of the inverted image
+    p.select_largest_component() #selected the largest connected components of the inverted image (this should now be the interior of the hole)
 
-    p.connected_components_iterative()
-    p.select_largest_component()
-
-    p.connected_components_iterative()
-    p.select_largest_component()
-
-    p.dilate()
-    p.mask_original()
-    p.show()
-    p.save_to_file()
+    p.dilate() #dilate the mask
+    p.mask_original() #mask the original image with the calculated mask
+    p.show() #show the mask for debugging
+    p.save_to_file() #saved the masked image to a file
