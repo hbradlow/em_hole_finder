@@ -1,5 +1,8 @@
 from find_mask import Pipeline
 
+import time
+start_time = time.time()
+
 filename = "test_images/test1.jpg"
 p = Pipeline(downsample=20,filename=filename)
 
@@ -17,5 +20,9 @@ p.select_largest_component() #selected the largest connected components of the i
 
 p.dilate() #dilate the mask
 p.mask_original() #mask the original image with the calculated mask
+
+duration = time.time()-start_time
+print "Took",round(duration),"seconds to complete"
+
 p.show() #show the mask for debugging
 p.save_to_file() #saved the masked image to a file
