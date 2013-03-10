@@ -4,3 +4,4 @@
 venv
 data
 output.jpg
+.DS_Store
