@@ -21,7 +21,7 @@ from skimage.morphology import label, closing, square, reconstruction, erosion, 
 import IPython
 
 #parameters
-DILATION =  20
+DILATION =  10
 EROSION =   8 
 
 class Pipeline:
@@ -268,7 +268,7 @@ def find_mask(filename,show=True):
 
     p.connected_components_iterative() #calculate the connected components of the inverted image
     #p.select_largest_component() #selected the largest connected components of the inverted image (this should now be the interior of the hole)
-    p.select_lightest_component()
+    p.select_lightst_component()
     p.show() #show the mask for debugging
 
     p.dilate() #dilate the mask
