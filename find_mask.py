@@ -32,9 +32,14 @@ def find_mask(filename,show=True):
     p.erode() #erode the thresholded image
 
     p.connected_components_iterative() #calculate the connected components
+    try:
+        p.check_circularity() #check to make sure everything makes sense so far
+    except:
+        print "FAIL"
+        return np.ones(p.data.shape)
     p.select_largest_component() #select the largest connected component
 
-    p.connected_components_iterative() #calculate the connected components of the inverted image
+    p.connected_components_iterative(full=False) #calculate the connected components of the inverted image
     #p.select_largest_component() #selected the largest connected components of the inverted image (this should now be the interior of the hole)
     p.select_lightest_component()
 

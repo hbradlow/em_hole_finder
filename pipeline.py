@@ -23,10 +23,11 @@ import IPython
 
 #pygeom
 from pygeom.algorithm.convex_hull import convex_hull
+from pyhull.convex_hull import ConvexHull
 
 #parameters
-DILATION =  8
-EROSION =   8 
+DILATION =  1
+EROSION =   8
 
 class Pipeline:
     def __init__(self,filename="data/test2.jpg",debug=False,downsample=20):
@@ -39,14 +40,14 @@ class Pipeline:
 
         self.debug = debug
 
-    def open(self,window_size=(10,10)):
+    def open(self,window_size=(2,2)):
         """
             Perform the opening of this image.
 
             http://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.morphology.grey_opening.html
         """
         self.data = np.max(self.data) - self.data
-        self.data -= grey_opening(self.data,size=(5,5)) 
+        self.data -= grey_opening(self.data,size=window_size)
         self.data = np.max(self.data) - self.data
 
     def select_lightest_component(self):
@@ -102,7 +103,20 @@ class Pipeline:
             for (x,y),value in np.ndenumerate(self.data):
                 if value == component:
                     points.append(np.array([x,y]))
-            chull = convex_hull(points)
+            test = ConvexHull(points).vertices
+            chull = []
+            for (index,p) in sorted(test,key=lambda x: x[0]):
+                chull.append(points[p])
+            ps = set()
+            points = np.array(points)
+            for x, y in chull:
+                ps.add(x)
+                ps.add(y)
+            ps = np.array(list(ps))
+            center = points[ps].mean(axis=0)
+            A = points[ps] - center
+            chull = points[ps[np.argsort(np.arctan2(A[:,1], A[:,0]))]]
+            #chull = convex_hull(points)
             
             def draw_line(p1,p2):
                 cc,rr = bresenham(x=p1[0],y=p1[1],x2=p2[0],y2=p2[1])
@@ -268,6 +282,23 @@ class Pipeline:
             Simple threshold for intensity.
         """
         self.data = filter.threshold_adaptive(self.data,factor)
+
+    def check_circularity(self,factor=3):
+        """
+            Checks to see if the mask makes sense so far. If it seems like the found mask is bogus, report the error.
+
+            The check just makes sure that the largest connected component is a lot bigger than the second larger.
+        """
+        sizes = sorted(self.component_sizes.values(),key = lambda x: -x)
+        if sizes[0] >= factor*sizes[1]:
+            return
+        else:
+            raise Exception("Not too sure about this one....")
+
+    def show_edges(self,sigma=3):
+        edges = filter.canny(self.data, sigma=sigma)
+        io.imshow(edges)
+        io.show()
 
     def crop(self,factor=8):
         """

@@ -22,33 +22,38 @@ import IPython
 
 from pipeline import Pipeline
 
-def find_particle(filename,show=True):
+def find_particle(filename,show=True,debug=False):
     from find_mask import find_mask
     hole_mask = find_mask(filename,show=False)
 
     p = Pipeline(downsample=20,filename=filename)
 
-    #p.show()
+    if debug:
+        p.show()
 
-    p.open()
+    p.open(window_size=(20,20))
     p.crop(factor=15)
     p.threshold() #do adaptive thresholding
 
-    #p.show()
+    if debug:
+        p.show()
 
     p.connected_components_iterative(full=False) #calculate the connected components
     p.threshold_component_size()
-    #p.show() #show the mask for debugging
+    if debug:
+        p.show() #show the mask for debugging
     p.data = np.max(p.data) - p.data
     p.erode(factor=1)
     p.erode(factor=1)
-    p.show()
 
-    #p.show() #show the mask for debugging
+    if debug:
+        p.show()
+
 
     p.subtract(hole_mask)
 
-    p.show()
+    if debug:
+        p.show()
 
     p.convex_hull_per_component()
 
