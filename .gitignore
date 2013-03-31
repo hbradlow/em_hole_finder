@@ -5,3 +5,8 @@ venv
 data
 output.jpg
 .DS_Store
+
+jpgs
+output
+try*
+*.zip

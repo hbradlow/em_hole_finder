@@ -22,8 +22,8 @@ import IPython
 
 from pipeline import Pipeline
 
-def find_mask(filename,show=True):
-    p = Pipeline(downsample=20,filename=filename)
+def find_mask(filename,show=True,outfile=None):
+    p = Pipeline(downsample=2,filename=filename)
 
     p.open() #perform background subtraction
     p.blur() #blur the image
@@ -35,19 +35,21 @@ def find_mask(filename,show=True):
     try:
         p.check_circularity() #check to make sure everything makes sense so far
     except:
-        print "FAIL"
+        print "I think this one doesn't have the hole in it..."
+        p.save_to_file(p.saved_data) #saved the masked image to a file
         return np.ones(p.data.shape)
     p.select_largest_component() #select the largest connected component
 
     p.connected_components_iterative(full=False) #calculate the connected components of the inverted image
     #p.select_largest_component() #selected the largest connected components of the inverted image (this should now be the interior of the hole)
-    p.select_lightest_component()
+    p.select_largest_component()
 
     p.dilate() #dilate the mask
-    #p.mask_original() #mask the original image with the calculated mask
+    p.mask_original() #mask the original image with the calculated mask
     if show:
-        p.show() #show the mask for debugging
-    p.save_to_file() #saved the masked image to a file
+        p.show(data=np.concatenate((p.saved_data,p.data),axis=1)) #show the mask for debugging
+
+    p.save_to_file(out=np.concatenate((p.saved_data,p.data),axis=1),filename=outfile) #saved the masked image to a file
     return p.data
 
 if __name__=="__main__":

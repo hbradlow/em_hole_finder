@@ -26,8 +26,8 @@ from pygeom.algorithm.convex_hull import convex_hull
 from pyhull.convex_hull import ConvexHull
 
 #parameters
-DILATION =  1
-EROSION =   8
+DILATION =  10
+EROSION =   5
 
 class Pipeline:
     def __init__(self,filename="data/test2.jpg",debug=False,downsample=20):
@@ -55,6 +55,9 @@ class Pipeline:
             Color the largest connected component white, and everything else black.
         """
         def component_average_intensity(c):
+            """
+                Give some weight to the size as well
+            """
             total = 0
             num = 0
             for (x,y),value in np.ndenumerate(self.data):
@@ -235,14 +238,16 @@ class Pipeline:
         """
         self.saved_data = self.data.copy()
 
-    def show(self,circle=False):
+    def show(self,circle=False,data=None):
         """
             Show the data in a debugging window.
         """
+        if data is None:
+            data = self.data
         if circle:
             io.imshow(self.data_with_circle())
         else:
-            io.imshow(self.data)
+            io.imshow(data)
         io.show()
 
     def blur(self,window_size=(10,10)):
@@ -323,13 +328,15 @@ class Pipeline:
         self.data = self.data - np.ones(self.data.shape)*image_min
         self.data *= (image_max)/(image_max-image_min)
 
-    def save_to_file(self):
+    def save_to_file(self,out = None,filename="output.jpg"):
         """
             Save the data to an image file.
         """ 
-        rescaled = (255.0 / self.data.max() * (self.data - self.data.min())).astype(np.uint8)
+        if out is None:
+            out = self.data
+        rescaled = (255.0 / out.max() * (out - out.min())).astype(np.uint8)
         im = Image.fromarray(rescaled)
-        im.save("output.jpg")
+        im.save(filename)
 
     def threshold_component_size(self,thresh=50):
         white = np.max(self.data)
