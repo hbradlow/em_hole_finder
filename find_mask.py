@@ -4,10 +4,6 @@ from PIL import Image
 #numpy
 import numpy as np
 
-#matplotlib
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-
 #scipy
 import scipy
 import scipy.signal
@@ -36,8 +32,8 @@ def find_mask(filename,show=True,outfile=None):
         p.check_circularity() #check to make sure everything makes sense so far
     except:
         print "I think this one doesn't have the hole in it..."
-        p.save_to_file(p.saved_data) #saved the masked image to a file
-        return np.ones(p.data.shape)
+        p.save_to_file(p.saved_data,filename=outfile) #saved the masked image to a file
+        return np.ones(p.data.shape) #return an empty mask
     p.select_largest_component() #select the largest connected component
 
     p.connected_components_iterative(full=False) #calculate the connected components of the inverted image

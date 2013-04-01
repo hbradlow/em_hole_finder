@@ -4,10 +4,6 @@ from PIL import Image
 #numpy
 import numpy as np
 
-#matplotlib
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-
 #scipy
 import scipy
 import scipy.signal
@@ -21,13 +17,9 @@ from skimage.draw import bresenham
 #ipython
 import IPython
 
-#pygeom
-from pygeom.algorithm.convex_hull import convex_hull
-from pyhull.convex_hull import ConvexHull
-
 #parameters
 DILATION =  10
-EROSION =   5
+EROSION =   1
 
 class Pipeline:
     def __init__(self,filename="data/test2.jpg",debug=False,downsample=20):
@@ -54,6 +46,7 @@ class Pipeline:
         """
             Color the largest connected component white, and everything else black.
         """
+        (h,w) = self.data.shape
         def component_average_intensity(c):
             """
                 Give some weight to the size as well
@@ -64,7 +57,7 @@ class Pipeline:
                 if value==c:
                     total += self.saved_data[x,y]
                     num += 1
-            return float(total)/num
+            return float(total)/num + num/float(h*w)
 
         max_component = max(self.component_sizes.items(),key=lambda x: component_average_intensity(x[0]))[0]
         for (x,y),value in np.ndenumerate(self.data):
@@ -99,6 +92,10 @@ class Pipeline:
                 self.data[x,y] = 0
 
     def convex_hull_per_component(self):
+        #pygeom
+        from pygeom.algorithm.convex_hull import convex_hull
+        from pyhull.convex_hull import ConvexHull
+
         self.connected_components_iterative()
         new_data = np.ones(self.data.shape)
         for component in self.component_sizes.keys():
@@ -271,16 +268,6 @@ class Pipeline:
         A = np.column_stack((np.ones(x.size), x, y))
         c, resid,rank,sigma = np.linalg.lstsq(A,self.data.flatten())
         self.c = c
-
-    def plot_3d(self):
-        """
-            Plot the data points in 3d.
-        """
-        fig = plt.figure()
-        X,Y = np.mgrid[:self.data.shape[0],:self.data.shape[1]]
-        ax = fig.add_subplot(1,1,1, projection='3d')
-        surf = ax.plot_surface(X,Y,self.data)
-        plt.show()
 
     def threshold(self,factor=500):
         """
