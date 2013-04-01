@@ -18,7 +18,7 @@ import IPython
 
 from pipeline import Pipeline
 
-def find_mask(filename,show=True,outfile=None):
+def find_mask(filename,show=False,outfile="output.jpg"):
     p = Pipeline(downsample=2,filename=filename)
 
     p.open() #perform background subtraction
@@ -42,10 +42,10 @@ def find_mask(filename,show=True,outfile=None):
 
     p.dilate() #dilate the mask
     p.mask_original() #mask the original image with the calculated mask
+    p.save_to_file(out=np.concatenate((p.saved_data,p.data),axis=1),filename=outfile) #saved the masked image to a file
     if show:
         p.show(data=np.concatenate((p.saved_data,p.data),axis=1)) #show the mask for debugging
 
-    p.save_to_file(out=np.concatenate((p.saved_data,p.data),axis=1),filename=outfile) #saved the masked image to a file
     return p.data
 
 if __name__=="__main__":
