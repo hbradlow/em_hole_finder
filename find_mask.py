@@ -19,7 +19,7 @@ import IPython
 from pipeline import Pipeline
 
 def find_mask(filename,show=False,outfile="output.jpg"):
-    p = Pipeline(downsample=2,filename=filename)
+    p = Pipeline(downsample=20,filename=filename)
 
     p.open() #perform background subtraction
     p.blur() #blur the image
@@ -28,12 +28,14 @@ def find_mask(filename,show=False,outfile="output.jpg"):
     p.erode() #erode the thresholded image
 
     p.connected_components_iterative() #calculate the connected components
+    """
     try:
         p.check_circularity() #check to make sure everything makes sense so far
     except:
         print "I think this one doesn't have the hole in it..."
         p.save_to_file(p.saved_data,filename=outfile) #saved the masked image to a file
         return np.ones(p.data.shape) #return an empty mask
+    """
     p.select_largest_component() #select the largest connected component
 
     p.connected_components_iterative(full=False) #calculate the connected components of the inverted image
