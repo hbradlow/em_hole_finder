@@ -17,17 +17,17 @@ from skimage.draw import bresenham
 #ipython
 import IPython
 
-#parameters
-DILATION =  10
-EROSION =   1
-
 class Pipeline:
-    def __init__(self,filename="data/test2.jpg",debug=False,downsample=20):
+    def __init__(self,filename="data/test2.jpg",debug=False,downsample=20, dilation=10,erosion=1):
         self.image = Image.open(filename)
         self.data = np.asarray(self.image)[:,:]
+        
+        self.dilationFactor = dilation
+        self.erosionFactor  = erosion
 
         self.decimate(downsample)
         self.normalize()
+
         self.save()
 
         self.debug = debug
@@ -43,6 +43,7 @@ class Pipeline:
         self.data = np.max(self.data) - self.data
 
     def select_lightest_component(self):
+
         """
             Color the largest connected component white, and everything else black.
         """
@@ -88,6 +89,8 @@ class Pipeline:
         for (x,y),value in np.ndenumerate(self.data):
             if value in self.deleted_components:
                 self.data[x,y] = white
+
+
             else:
                 self.data[x,y] = 0
 
@@ -117,7 +120,7 @@ class Pipeline:
             A = points[ps] - center
             chull = points[ps[np.argsort(np.arctan2(A[:,1], A[:,0]))]]
             #chull = convex_hull(points)
-            
+
             def draw_line(p1,p2):
                 cc,rr = bresenham(x=p1[0],y=p1[1],x2=p2[0],y2=p2[1])
                 new_data[rr,cc] = 0
@@ -130,6 +133,7 @@ class Pipeline:
 
 
         self.data = new_data
+        
     def mask_original(self,mask=None):
         """
             Mask the original image with the computed mask in self.data.
@@ -150,11 +154,12 @@ class Pipeline:
             The image is first inverted because the erosion function erodes white regions.
         """
         if not factor:
-            factor = EROSION
+            factor = self.erosionFactor
         self.data = (1.0 / self.data.max() * (self.data - self.data.min())).astype(np.uint8) #convert the values to floats between 0 and 1
         self.data = np.max(self.data)-self.data
         self.data = erosion(self.data,square(factor))
         self.data = np.max(self.data)-self.data
+
 
     def dilate(self):
         """
@@ -166,8 +171,9 @@ class Pipeline:
         self.data = (1.0 / self.data.max() * (self.data - self.data.min())).astype(np.uint8) #convert the values to floats between 0 and 1
 
         self.data = np.max(self.data)-self.data
-        self.data = dilation(self.data,square(DILATION))
+        self.data = dilation(self.data,square(self.dilationFactor))
         self.data = np.max(self.data)-self.data
+
 
     def connected_components_iterative(self,full=True):
         """
@@ -178,6 +184,7 @@ class Pipeline:
 
             Output:
             self.data will contain numbers from 0-num_components.
+
             0 means that a pixel is not in any component.
             Any other number refers to which component the pixel is part of.
         """
@@ -209,7 +216,7 @@ class Pipeline:
 
             found_component = 0
 
-            for (nx,ny) in get_neighbors(x,y): 
+            for (nx,ny) in get_neighbors(x,y):
                 if component_cache[nx,ny] != 0: #if any of this pixel's neighbors are in a component, then this pixel is also in that component
                     component_cache[x,y] = component_cache[nx,ny]
                     found_component = component_cache[nx,ny]
@@ -223,11 +230,14 @@ class Pipeline:
                 self.component_sizes[found_component] = 1
 
             for (nx,ny) in get_neighbors(x,y): #process all of my neighbors
+
                 pixel_stack.append((nx,ny))
 
         self.data = component_cache
         if self.debug:
             print self.component_sizes
+
+
 
     def save(self):
         """
@@ -254,6 +264,7 @@ class Pipeline:
         window = np.ones(window_size)
         window /= np.linalg.norm(window)
         self.data = scipy.signal.convolve2d(self.data, window,mode="same")#, boundary='fill',fillvalue=np.max(self.data))
+
 
     def fit_plane(self):
         """
@@ -296,8 +307,10 @@ class Pipeline:
         """
             Crop the borders of the image.
         """
-        self.data = self.data[factor:-factor,factor:-factor]
-        self.saved_data = self.saved_data[factor:-factor,factor:-factor]
+	factorx = self.data.shape[0] / factor
+	factory = self.data.shape[1] / factor
+        self.data = self.data[factorx:-factorx,factory:-factory]
+        self.saved_data = self.saved_data[factorx:-factorx,factory:-factory]
 
     def decimate(self,downsample=20):
         """
@@ -306,6 +319,7 @@ class Pipeline:
         self.data = scipy.signal.decimate(self.data,downsample,axis=0,ftype='fir')
         self.data = scipy.signal.decimate(self.data,downsample,axis=1,ftype='fir')
 
+
     def normalize(self):
         """
             Rescale the values of the image.
@@ -313,12 +327,14 @@ class Pipeline:
         image_min = np.min(self.data)
         image_max = np.max(self.data)
         self.data = self.data - np.ones(self.data.shape)*image_min
+
+
         self.data *= (image_max)/(image_max-image_min)
 
     def save_to_file(self,out = None,filename="output.jpg"):
         """
             Save the data to an image file.
-        """ 
+        """
         if out is None:
             out = self.data
         rescaled = (255.0 / out.max() * (out - out.min())).astype(np.uint8)
@@ -333,3 +349,4 @@ class Pipeline:
                     self.data[x,y] = 0
                 else:
                     self.data[x,y] = white
+
